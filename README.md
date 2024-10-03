@@ -1,6 +1,10 @@
-# BlockchainCoinSafe[Live Link!](https://your-live-demo-link.com)
+# BlockchainCoinSafe
 
 BlockchainCoinSafe is a simple token wallet application built on blockchain principles, allowing users to create wallets, send and receive tokens, and track transaction history securely.
+
+## 📍 Deployed App
+
+Explore the live app here: [BlockchainCoinSafe](https://your-live-demo-link.com)
 
 ## Features
 
