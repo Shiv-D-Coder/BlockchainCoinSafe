@@ -38,7 +38,7 @@ def main():
     
     with col1:
         st.subheader("📥 Receive Tokens")
-        st.info("The 'Receive Tokens' feature simulates receiving tokens from an external source, like mining rewards or transfers from other blockchains.")
+        st.info("The 'Receive Tokens' feature simulates receiving tokens from an external source.")
         receive_amount = st.number_input("Amount to receive", min_value=0, step=1, key="receive")
         receive_label = st.text_input("Label for transaction (optional)", key="receive_label")
         if st.button("Receive"):
@@ -53,22 +53,30 @@ def main():
             send_amount = st.number_input("Amount to send", min_value=0, step=1, key="send")
             send_label = st.text_input("Label for transaction (optional)", key="send_label")
             if st.button("Send"):
-                try:
-                    result = st.session_state.wallet.send_token(selected_wallet, receiver, send_amount, send_label)
-                    if "successful" in result:
-                        st.success(result)
-                    else:
-                        st.error(result)
-                except TypeError as e:
-                    st.error(f"Error: {str(e)}. Please check the TokenWallet implementation.")
+                result = st.session_state.wallet.send_token(selected_wallet, receiver, send_amount, send_label)
+                if "Sent" in result:
+                    st.success(result)
+                else:
+                    st.error(result)
         else:
             st.warning("No other wallets available to send tokens to.", icon="⚠️")
     
+    # Transaction History Section
+    st.subheader("📝 Transaction History")
+    if st.button("Download Transaction History"):
+        transaction_history_text = st.session_state.wallet.get_transaction_history(selected_wallet)
+        st.download_button(
+            label="Download Transaction History",
+            data=transaction_history_text,
+            file_name=f"{selected_wallet}_transaction_history.txt",
+            mime="text/plain"
+        )
+    
     # Proof of Work (PoW) Section
     st.subheader("🔨 Proof of Work Simulation")
-    st.info("Adjust the difficulty level of the mining process and simulate block creation.")
+    st.info("Adjust the difficulty level of the mining process.")
     
-    difficulty = st.slider("Set Mining Difficulty (Number of leading zeros)", 1,5, value=2)
+    difficulty = st.slider("Set Mining Difficulty (Number of leading zeros)", 1, 5, value=2)
     if st.button("Set Difficulty"):
         result = st.session_state.wallet.set_difficulty(difficulty)
         st.info(result)
@@ -83,13 +91,13 @@ def main():
             st.write(f"Transactions: {block['transactions']}")
             st.write(f"Previous Hash: {block['previous_hash']}")
             st.write(f"Merkle Root: {block['merkle_root']}")
+            st.write(f"Nonce: {block['nonce']}")
             st.write(f"Hash: {block['hash']}")
             st.write("---")
         
         # Download button for blockchain data
-        blockchain_text = "\n".join([
-            f"Block {block['index']} - Timestamp: {block['timestamp']}, Transactions: {block['transactions']}, "
-            f"Previous Hash: {block['previous_hash']}, Merkle Root: {block['merkle_root']}, Hash: {block['hash']}"
+        blockchain_text = "\n".join([f"Block {block['index']} - Timestamp: {block['timestamp']}, Transactions: {block['transactions']}, "
+            f"Previous Hash: {block['previous_hash']}, Merkle Root: {block['merkle_root']}, Nonce: {block['nonce']}, Hash: {block['hash']}\n"
             for block in blockchain
         ])
         st.download_button(
