@@ -8,7 +8,7 @@ if 'wallet' not in st.session_state:
 def main():
     st.set_page_config(page_title="TokenWallet App", page_icon="💰", layout="wide")
     
-    st.title("🏦 TokenWallet App")
+    st.title("🏦 TokenWallet App with Blockchain")
     
     # Sidebar for wallet creation and selection
     with st.sidebar:
@@ -24,7 +24,7 @@ def main():
             selected_wallet = st.selectbox("Choose a wallet", options=wallet_options)
         else:
             st.info("No wallets created yet. Create a wallet to get started.")
-            return  # Exit the function if no wallets exist
+            return
     
     # Main area
     st.subheader(f"💼 Wallet: {selected_wallet}")
@@ -40,8 +40,9 @@ def main():
         st.subheader("📥 Receive Tokens")
         st.info("The 'Receive Tokens' feature simulates receiving tokens from an external source, like mining rewards or transfers from other blockchains.")
         receive_amount = st.number_input("Amount to receive", min_value=0, step=1, key="receive")
+        receive_label = st.text_input("Label for transaction (optional)", key="receive_label")
         if st.button("Receive"):
-            result = st.session_state.wallet.receive_token(selected_wallet, receive_amount)
+            result = st.session_state.wallet.receive_token(selected_wallet, receive_amount, receive_label)
             st.success(result)
     
     with col2:
@@ -50,9 +51,10 @@ def main():
         if receiver_options:
             receiver = st.selectbox("Select receiver", options=receiver_options)
             send_amount = st.number_input("Amount to send", min_value=0, step=1, key="send")
+            send_label = st.text_input("Label for transaction (optional)", key="send_label")
             if st.button("Send"):
                 try:
-                    result = st.session_state.wallet.send_token(selected_wallet, receiver, send_amount)
+                    result = st.session_state.wallet.send_token(selected_wallet, receiver, send_amount, send_label)
                     if "successful" in result:
                         st.success(result)
                     else:
@@ -60,36 +62,44 @@ def main():
                 except TypeError as e:
                     st.error(f"Error: {str(e)}. Please check the TokenWallet implementation.")
         else:
-            st.info("No other wallets available to send tokens to.")
+            st.warning("No other wallets available to send tokens to.", icon="⚠️")
     
-    # Transaction History
-    st.subheader("📜 Transaction History")
-    if hasattr(st.session_state.wallet, 'get_transaction_history'):
-        history = st.session_state.wallet.get_transaction_history()
-        if history:
-            # Filter transactions for the selected wallet
-            wallet_history = [tx for tx in history if tx['sender'] == selected_wallet or tx['receiver'] == selected_wallet]
-            if wallet_history:
-                for tx in wallet_history:
-                    if tx['sender'] == selected_wallet:
-                        st.write(f"Sent {tx['amount']} tokens to {tx['receiver']} on {tx['timestamp']}")
-                    else:
-                        st.write(f"Received {tx['amount']} tokens from {tx['sender']} on {tx['timestamp']}")
-                
-                # Download button for transaction history
-                history_text = "\n".join([f"{tx['timestamp']}: {tx['sender']} -> {tx['receiver']}: {tx['amount']} tokens" for tx in wallet_history])
-                st.download_button(
-                    label="Download Transaction History",
-                    data=history_text,
-                    file_name=f"{selected_wallet}_transaction_history.txt",
-                    mime="text/plain",
-                )
-            else:
-                st.info("No transactions for this wallet yet.")
-        else:
-            st.info("No transactions recorded yet.")
+    # Proof of Work (PoW) Section
+    st.subheader("🔨 Proof of Work Simulation")
+    st.info("Adjust the difficulty level of the mining process and simulate block creation.")
+    
+    difficulty = st.slider("Set Mining Difficulty (Number of leading zeros)", 1,5, value=2)
+    if st.button("Set Difficulty"):
+        result = st.session_state.wallet.set_difficulty(difficulty)
+        st.info(result)
+
+    # Blockchain Display
+    st.subheader("🔗 Blockchain Overview")
+    blockchain = st.session_state.wallet.get_blockchain()
+    if blockchain:
+        for block in blockchain:
+            st.write(f"**Block {block['index']}**")
+            st.write(f"Timestamp: {block['timestamp']}")
+            st.write(f"Transactions: {block['transactions']}")
+            st.write(f"Previous Hash: {block['previous_hash']}")
+            st.write(f"Merkle Root: {block['merkle_root']}")
+            st.write(f"Hash: {block['hash']}")
+            st.write("---")
+        
+        # Download button for blockchain data
+        blockchain_text = "\n".join([
+            f"Block {block['index']} - Timestamp: {block['timestamp']}, Transactions: {block['transactions']}, "
+            f"Previous Hash: {block['previous_hash']}, Merkle Root: {block['merkle_root']}, Hash: {block['hash']}"
+            for block in blockchain
+        ])
+        st.download_button(
+            label="Download Blockchain Data",
+            data=blockchain_text,
+            file_name="blockchain_data.txt",
+            mime="text/plain",
+        )
     else:
-        st.error("Transaction history feature is not available in the current TokenWallet implementation.")
+        st.warning("Blockchain is empty.", icon="⚠️")
 
 if __name__ == "__main__":
     main()
