@@ -97,7 +97,7 @@ def main():
         
         # Download button for blockchain data
         blockchain_text = "\n".join([f"Block {block['index']} - Timestamp: {block['timestamp']}, Transactions: {block['transactions']}, "
-            f"Previous Hash: {block['previous_hash']}, Merkle Root: {block['merkle_root']}, Nonce: {block['nonce']}, Hash: {block['hash']}\n"
+            f"Previous Hash: {block['previous_hash']}, Merkle Root: {block['merkle_root']}, Nonce: {block['nonce']}, Hash: {block['hash']}"
             for block in blockchain
         ])
         st.download_button(
