@@ -10,6 +10,7 @@ class MerkleTree:
     def add_leaf(self, data):
         """Add a transaction as a leaf."""
         self.leaves.append(self.hash(data))
+        self.build_tree()
 
     def hash(self, data):
         """Create a SHA-256 hash of the data."""
@@ -17,6 +18,10 @@ class MerkleTree:
 
     def build_tree(self):
         """Build the Merkle Tree."""
+        if not self.leaves:
+            return
+        
+        self.tree = [self.leaves]
         current_level = self.leaves
 
         while len(current_level) > 1:
@@ -27,14 +32,18 @@ class MerkleTree:
                 else:
                     combined = current_level[i]  # Odd leaf, carry forward
                 next_level.append(self.hash(combined))
+            self.tree.append(next_level)
             current_level = next_level
-        self.tree = current_level  # The top level contains the Merkle Root
 
     def get_merkle_root(self):
         """Return the Merkle Root."""
         if self.tree:
-            return self.tree[0]
+            return self.tree[-1][0]
         return None
+
+    def get_tree_structure(self):
+        """Return the full tree structure for visualization."""
+        return self.tree
 
 class Block:
     def __init__(self, index, transactions, timestamp, previous_hash, nonce=0):
@@ -43,18 +52,10 @@ class Block:
         self.timestamp = timestamp
         self.previous_hash = previous_hash
         self.nonce = nonce
-        self.merkle_root = self.calculate_merkle_root()
         self.hash = self.calculate_hash()
 
-    def calculate_merkle_root(self):
-        merkle_tree = MerkleTree()
-        for txn in self.transactions:
-            merkle_tree.add_leaf(f"{txn['sender']},{txn['receiver']},{txn['amount']},{txn['timestamp']},{txn['label']}")
-        merkle_tree.build_tree()
-        return merkle_tree.get_merkle_root()
-
     def calculate_hash(self):
-        block_string = f"{self.index}{self.transactions}{self.timestamp}{self.previous_hash}{self.nonce}{self.merkle_root}"
+        block_string = f"{self.index}{self.transactions}{self.timestamp}{self.previous_hash}{self.nonce}"
         return hashlib.sha256(block_string.encode()).hexdigest()
 
 class TokenWallet:
@@ -62,6 +63,7 @@ class TokenWallet:
         self.wallets = {}
         self.blockchain = []
         self.difficulty = 2  # Number of leading zeros required in hash
+        self.merkle_tree = MerkleTree()
         self.create_genesis_block()
 
     def create_genesis_block(self):
@@ -98,6 +100,9 @@ class TokenWallet:
 
         self.wallets[wallet_name]["transaction_history"].append(transaction)
 
+        # Add transaction to Merkle Tree
+        self.merkle_tree.add_leaf(f"{transaction['sender']},{transaction['receiver']},{transaction['amount']},{transaction['timestamp']},{transaction['label']}")
+
         # Create a new block for this transaction
         self.create_block([transaction])
 
@@ -126,6 +131,9 @@ class TokenWallet:
 
         self.wallets[sender_wallet]["transaction_history"].append(transaction)
         self.wallets[receiver_wallet]["transaction_history"].append(transaction)
+
+        # Add transaction to Merkle Tree
+        self.merkle_tree.add_leaf(f"{transaction['sender']},{transaction['receiver']},{transaction['amount']},{transaction['timestamp']},{transaction['label']}")
 
         # Create a new block for this transaction
         self.create_block([transaction])
@@ -161,3 +169,7 @@ class TokenWallet:
                 f"{transaction['sender']},{transaction['receiver']},{transaction['amount']},{transaction['timestamp']},{transaction['label']}"
             )
         return "\n".join(history_lines)
+
+    def get_merkle_tree(self):
+        """Return the Merkle tree for the entire blockchain."""
+        return self.merkle_tree.get_tree_structure()

@@ -1,5 +1,8 @@
 import streamlit as st
 from token_wallet import TokenWallet
+from visualizations import visualize_blockchain, visualize_merkle_tree, visualize_transaction
+import networkx as nx
+import matplotlib.pyplot as plt
 
 # Initialize session state
 if 'wallet' not in st.session_state:
@@ -81,23 +84,31 @@ def main():
         result = st.session_state.wallet.set_difficulty(difficulty)
         st.info(result)
 
-    # Blockchain Display
-    st.subheader("🔗 Blockchain Overview")
+    # Blockchain Visualization
+    st.subheader("🔗 Blockchain Visualization")
     blockchain = st.session_state.wallet.get_blockchain()
     if blockchain:
-        for block in blockchain:
-            st.write(f"**Block {block['index']}**")
-            st.write(f"Timestamp: {block['timestamp']}")
-            st.write(f"Transactions: {block['transactions']}")
-            st.write(f"Previous Hash: {block['previous_hash']}")
-            st.write(f"Merkle Root: {block['merkle_root']}")
-            st.write(f"Nonce: {block['nonce']}")
-            st.write(f"Hash: {block['hash']}")
-            st.write("---")
+        visualize_blockchain(blockchain)
         
+        # Merkle Tree Visualization for the entire blockchain
+        st.subheader("🌳 Merkle Tree Visualization (All Transactions)")
+        merkle_tree = st.session_state.wallet.get_merkle_tree()
+        if merkle_tree:
+            visualize_merkle_tree(merkle_tree)
+        else:
+            st.info("No transactions in the blockchain yet.")
+
+        # Transaction Visualization
+        st.subheader("💸 Latest Transaction Visualization")
+        if blockchain[-1]['transactions']:
+            transaction = blockchain[-1]['transactions'][0]  # Visualize the latest transaction
+            visualize_transaction(transaction)
+        else:
+            st.info("No transactions in the latest block.")
+
         # Download button for blockchain data
         blockchain_text = "\n".join([f"Block {block['index']} - Timestamp: {block['timestamp']}, Transactions: {block['transactions']}, "
-            f"Previous Hash: {block['previous_hash']}, Merkle Root: {block['merkle_root']}, Nonce: {block['nonce']}, Hash: {block['hash']}"
+            f"Previous Hash: {block['previous_hash']}, Nonce: {block['nonce']}, Hash: {block['hash']}"
             for block in blockchain
         ])
         st.download_button(
