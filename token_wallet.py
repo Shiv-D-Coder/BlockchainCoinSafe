@@ -117,48 +117,93 @@
 #         print(transaction.strip())
 
 
-import hashlib
 from datetime import datetime
+
 class TokenWallet:
     def __init__(self):
         self.wallets = {}
         self.transaction_history = []
 
-    def create_wallet(self, name):
-        if name not in self.wallets:
-            self.wallets[name] = 0
-            return f"Wallet '{name}' created successfully"
-        return f"Wallet '{name}' already exists"
+    def create_wallet(self, wallet_name):
+        if wallet_name in self.wallets:
+            return f"Wallet '{wallet_name}' already exists."
+        self.wallets[wallet_name] = {"balance": 0}  # Store wallet with a balance as a dictionary
+        return f"Wallet '{wallet_name}' created successfully."
 
-    def get_balance(self, name):
-        return self.wallets.get(name)
+    def get_balance(self, wallet_name):
+        if wallet_name in self.wallets:
+            return self.wallets[wallet_name]['balance']
+        return None
 
-    def receive_token(self, name, amount):
-        if name in self.wallets:
-            self.wallets[name] += amount
-            self.transaction_history.append({
-                'timestamp': datetime.now().isoformat(),
-                'sender': 'SYSTEM',
-                'receiver': name,
-                'amount': amount
-            })
-            return f"Received {amount} tokens for {name}"
-        return f"Wallet '{name}' not found"
+    def receive_token(self, wallet_name, amount, label=None):
+        # Ensure the wallet exists and amount is valid
+        if wallet_name not in self.wallets:
+            return f"Wallet '{wallet_name}' does not exist."
+        if amount <= 0:
+            return "Amount must be positive."
+        
+        # Add the received amount to the wallet's balance
+        self.wallets[wallet_name]['balance'] += amount
 
-    def send_token(self, sender, receiver, amount):
-        if sender in self.wallets and receiver in self.wallets:
-            if self.wallets[sender] >= amount:
-                self.wallets[sender] -= amount
-                self.wallets[receiver] += amount
-                self.transaction_history.append({
-                    'timestamp': datetime.now().isoformat(),
-                    'sender': sender,
-                    'receiver': receiver,
-                    'amount': amount
-                })
-                return f"Transaction successful! Sent {amount} tokens from {sender} to {receiver}"
-            return f"Insufficient balance in {sender}'s wallet"
-        return "One or both wallets do not exist"
+        # Create a transaction record with a label
+        transaction = {
+            "sender": "external_source",
+            "receiver": wallet_name,
+            "amount": amount,
+            "timestamp": datetime.now().isoformat(),
+            "label": label if label else "No label provided"
+        }
 
-    def get_transaction_history(self):
-        return self.transaction_history
+        # Add the transaction to the transaction history
+        self.transaction_history.append(transaction)
+
+        return f"Received {amount} tokens in wallet '{wallet_name}' with label '{transaction['label']}'"
+
+    def send_token(self, sender_wallet, receiver_wallet, amount, label=None):
+        # Ensure wallets exist and amount is valid
+        if sender_wallet not in self.wallets:
+            return f"Wallet '{sender_wallet}' does not exist."
+        if receiver_wallet not in self.wallets:
+            return f"Wallet '{receiver_wallet}' does not exist."
+        if amount <= 0:
+            return "Amount must be positive."
+        if self.wallets[sender_wallet]['balance'] < amount:
+            return "Insufficient balance."
+        
+        # Deduct the amount from the sender and add it to the receiver
+        self.wallets[sender_wallet]['balance'] -= amount
+        self.wallets[receiver_wallet]['balance'] += amount
+
+        # Create a transaction record with a label
+        transaction = {
+            "sender": sender_wallet,
+            "receiver": receiver_wallet,
+            "amount": amount,
+            "timestamp": datetime.now().isoformat(),
+            "label": label if label else "No label provided"
+        }
+
+        # Add the transaction to the transaction history
+        self.transaction_history.append(transaction)
+
+        return f"Sent {amount} tokens from '{sender_wallet}' to '{receiver_wallet}' with label '{transaction['label']}'"
+
+    def set_difficulty(self, difficulty):
+        # Set the difficulty level for mining (this is just a placeholder for now)
+        self.difficulty = difficulty
+        return f"Difficulty set to {difficulty} leading zeros."
+
+    def get_blockchain(self):
+        # Simulate a simple blockchain with transaction history (no real mining logic)
+        blockchain = []
+        for index, transaction in enumerate(self.transaction_history, start=1):
+            block = {
+                "index": index,
+                "timestamp": transaction['timestamp'],
+                "transactions": transaction,
+                "previous_hash": "0" if index == 1 else blockchain[-1]['hash'],
+                "merkle_root": "mock_merkle_root",
+                "hash": "mock_hash"  # In reality, you would calculate this based on block data
+            }
+            blockchain.append(block)
+        return blockchain
