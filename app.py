@@ -1,6 +1,6 @@
 import streamlit as st
 from token_wallet import TokenWallet
-from visualizations import visualize_blockchain, visualize_merkle_tree, visualize_transaction
+from visualization import visualize_blockchain, visualize_merkle_tree, visualize_transaction
 import networkx as nx
 import matplotlib.pyplot as plt
 
