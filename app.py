@@ -1,6 +1,6 @@
 import streamlit as st
 from token_wallet import TokenWallet
-from visualization import visualize_blockchain, visualize_merkle_tree, visualize_transaction
+from visualizations import visualize_blockchain, visualize_merkle_tree, visualize_transaction
 import networkx as nx
 import matplotlib.pyplot as plt
 
@@ -107,6 +107,9 @@ def main():
             st.info("No transactions in the latest block.")
 
         # Download button for blockchain data
+      
+
+# Download button for blockchain data
         blockchain_text = "\n".join([f"Block {block['index']} - Timestamp: {block['timestamp']}, Transactions: {block['transactions']}, "
             f"Previous Hash: {block['previous_hash']}, Nonce: {block['nonce']}, Hash: {block['hash']}"
             for block in blockchain
@@ -117,6 +120,8 @@ def main():
             file_name="blockchain_data.txt",
             mime="text/plain",
         )
+
+
     else:
         st.warning("Blockchain is empty.", icon="⚠️")
 
